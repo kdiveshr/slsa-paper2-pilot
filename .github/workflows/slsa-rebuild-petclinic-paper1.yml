@@ -23,12 +23,20 @@ jobs:
     container:
       image: ghcr.io/kdiveshr/reproducible-builds-ci-study-builder@sha256:97995a7aa18ba0cc056850d046d79d9dd87d7b285930ed4d85e084d52c996504
     steps:
-      - name: Checkout fix commit
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          repository: kdiveshr/spring-petclinic-data-jdbc
-          ref: 8209b81b8666054de26108a9cdefa879208bca75
-          path: src
+      # Attempt 1 (run 45061386510) reproduced THIS run's digest 3a8a20c5, not Paper 1's
+      # 1f4a011d — with the identical container/JDK/Maven/SDE. Paper 1's build log shows
+      # git.total.commit.count=672 (full-history clone) and remote URL ending ".git",
+      # while actions/checkout (depth 1) gives count=1 and no ".git" suffix. Attempt 2:
+      # plain full git clone, Paper 1's method, to test whether checkout depth + remote
+      # URL form are the whole difference.
+      - name: Clone fix commit (full history, Paper 1 method)
+        shell: bash
+        run: |
+          git clone https://github.com/kdiveshr/spring-petclinic-data-jdbc.git src
+          cd src
+          git checkout 8209b81b8666054de26108a9cdefa879208bca75
+          git log -1 --format='commit %H count %ct'
+          git rev-list --count HEAD
 
       - name: Record toolchain
         shell: bash
