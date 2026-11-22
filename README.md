@@ -1,17 +1,20 @@
 # slsa-paper2-pilot
 
-Pilot repo for Paper 2 (IEEE IT Professional): SLSA provenance verification
-detection matrix. Test repo only — 2–3 projects, Nov 2026.
+Study repo for Paper 2 (IEEE IT Professional): does SLSA provenance verification actually protect you? It mints real provenance for Paper 1's Maven JARs in GitHub Actions, then tests the verifier against tampering, honest rebuilds, and a compromised builder.
 
-- Builds 3 small public Spring Boot (Maven) projects from Paper 1 at their
-  pinned commits (plus Paper 1 fix commits), mints SLSA provenance with
-  GitHub Artifact Attestations (`actions/attest-build-provenance@v2`), and
-  uploads the JARs so `slsa-verifier` / `gh attestation verify` can be run
-  locally against them.
-- One legacy spot-check job uses the frozen `slsa-github-generator`
-  generic workflow @v2.1.0 (unmaintained since Aug 2026).
-- All tamper is self-inflicted on own copies (a marker file added to one
-  JAR in the `compromise` variant). No real secrets, no upstream repos
-  touched, no third-party repos touched.
+## What's in here
 
-Trigger: Actions tab → `slsa-pilot` workflow → Run workflow.
+- `pilot.yml` — the 3-project pilot (22 November 2026): provenance minting, the legacy generator spot-check, and the first detection matrix (25 of 25 as expected). This is where we found Maven 3.10.1 makes unfixed builds byte-identical by default, so the full run pins Maven 3.9.9.
+- `full-run.yml` — the full run (22 November 2026): 25 projects, 199 verification cases. Tampering caught 73 of 73; honest rebuilds mistaken for tampering 22 of 25; after the Paper 1 fix, 0 of 24; builder compromise passed 25 of 25.
+- `slsa-retry-scheduledashboard.yml` — the single-job retry that recovered the one cell lost to a Maven Central rate limit.
+- `slsa-rebuild-petclinic-paper1.yml` — the rebuild that settled the petclinic digest question: checkout depth, not the JDK.
+
+## Ground rules
+
+All tampering is self-inflicted on our own copies — a marker file added to one JAR in the `compromise` variant. No real secrets, no upstream repos touched, no third-party repos touched.
+
+Provenance is minted by this repo's workflows, not inside each project's fork, so the attestation's source URI names this repo. The digest binding the study tests is unaffected; the paper says so plainly.
+
+## Results
+
+The numbers and the manuscript live with the paper, not here — this repo holds the workflows only. Headline: the verifier catches every tamper it can see, mistakes most honest rebuilds for tampering, and is blind to builder compromise. The Paper 1 fix removes the false positives entirely.

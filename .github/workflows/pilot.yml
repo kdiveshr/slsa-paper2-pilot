@@ -3,9 +3,8 @@
 # uploads the JARs so slsa-verifier can be run locally against them.
 # All tamper is self-inflicted on own copies; no real secrets; no upstream.
 # NOTE: provenance source URI is this pilot repo's workflow (the builder),
-# not the project repo — the full run should mint provenance in each
-# project's fork so the source URI matches. The digest-binding matrix this
-# pilot tests is unaffected by that caveat.
+# not the project repo — the full run kept this setup and discloses it as a
+# caveat in the paper. The digest-binding matrix is unaffected.
 name: slsa-pilot
 on:
   workflow_dispatch: {}
@@ -221,3 +220,4 @@ jobs:
     with:
       base64-subjects: "${{ needs.gen-build.outputs.hashes }}"
       upload-assets: false
+
