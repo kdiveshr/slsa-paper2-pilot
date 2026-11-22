@@ -30,6 +30,7 @@ jobs:
 
       - name: Record toolchain
         run: |
+        shell: bash
           java -version
           mvn -version
           echo "SOURCE_DATE_EPOCH=1794971015"
@@ -37,6 +38,7 @@ jobs:
       - name: Build (Paper 1 command; SOURCE_DATE_EPOCH exported in-step)
         working-directory: src
         run: |
+        shell: bash
           set -euo pipefail
           export SOURCE_DATE_EPOCH=1794971015
           mvn -B package -DskipTests
@@ -44,6 +46,7 @@ jobs:
       - name: Locate built JAR
         id: jar
         run: |
+        shell: bash
           JAR="src/target/spring-petclinic-data-jdbc-3.0.0.BUILD-SNAPSHOT.jar"
           test -f "$JAR" || { echo "FATAL: representative JAR not found: $JAR"; ls src/target/*.jar 2>/dev/null || true; exit 1; }
           echo "jar=$JAR" >> "$GITHUB_OUTPUT"
