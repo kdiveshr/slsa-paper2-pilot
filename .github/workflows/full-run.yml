@@ -1,0 +1,1171 @@
+# SLSA Paper 2 — FULL RUN (Nov 22, 2026)
+# 25 Paper 1 projects x (unfixed/env1, unfixed/env2, fixed/env1,
+# fixed/env2, compromise/env1); agentcore has parent-commit instead of fixed.
+# Maven 3.9.9 PINNED on every build job (runners ship 3.10.1, which makes
+# unfixed builds byte-identical by default and would null arm (d)).
+# Drift is toolchain-version-dependent — disclose everywhere.
+# All tamper is self-inflicted on own copies; no real secrets; no upstream touched.
+# Provenance source URI is this pilot repo's workflow (the builder), not each
+# project's fork — digest-binding matrix unaffected; disclose in the paper.
+# Attest: actions/attest-build-provenance@v2, SHA-pinned below (recorded in
+# verify-results.json). Generator arm must stay tag-pinned @v2.1.0 (SHA fails).
+name: slsa-full-run
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  id-token: write
+  attestations: write
+
+jobs:
+  build:
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: graphql-jpa-query
+            repo: introproventures/graphql-jpa-query
+            ref: 649307fc6bfbc87201dbb3a7b9823254a0f1e65f
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: schema/target/graphql-jpa-query-schema-1.4.1-SNAPSHOT.jar
+          - project: graphql-jpa-query
+            repo: introproventures/graphql-jpa-query
+            ref: 649307fc6bfbc87201dbb3a7b9823254a0f1e65f
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: schema/target/graphql-jpa-query-schema-1.4.1-SNAPSHOT.jar
+          - project: graphql-jpa-query
+            repo: kdiveshr/graphql-jpa-query
+            ref: ec198afeb540d5f5b3c65c389d330ec94cc1e475
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: schema/target/graphql-jpa-query-schema-1.4.1-SNAPSHOT.jar
+          - project: graphql-jpa-query
+            repo: kdiveshr/graphql-jpa-query
+            ref: ec198afeb540d5f5b3c65c389d330ec94cc1e475
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: schema/target/graphql-jpa-query-schema-1.4.1-SNAPSHOT.jar
+          - project: graphql-jpa-query
+            repo: introproventures/graphql-jpa-query
+            ref: 649307fc6bfbc87201dbb3a7b9823254a0f1e65f
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: schema/target/graphql-jpa-query-schema-1.4.1-SNAPSHOT.jar
+          - project: scheduledashboard
+            repo: VarshaUpadhyay/ScheduleDashboard
+            ref: 831e05423fe78b91915835cdfb04ea1e155bea57
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/schedule-dashboard-1.0.2-exec.jar
+          - project: scheduledashboard
+            repo: VarshaUpadhyay/ScheduleDashboard
+            ref: 831e05423fe78b91915835cdfb04ea1e155bea57
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/schedule-dashboard-1.0.2-exec.jar
+          - project: scheduledashboard
+            repo: kdiveshr/ScheduleDashboard
+            ref: e682bf1e990716448d7ce90ceccc79ea1f5f0b39
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/schedule-dashboard-1.0.2-exec.jar
+          - project: scheduledashboard
+            repo: kdiveshr/ScheduleDashboard
+            ref: e682bf1e990716448d7ce90ceccc79ea1f5f0b39
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/schedule-dashboard-1.0.2-exec.jar
+          - project: scheduledashboard
+            repo: VarshaUpadhyay/ScheduleDashboard
+            ref: 831e05423fe78b91915835cdfb04ea1e155bea57
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/schedule-dashboard-1.0.2-exec.jar
+          - project: shopping-app-backend
+            repo: Shitanshu686/shopping-app-backend
+            ref: d1b392e7f767c4d6010768a9dfa5297bb245c964
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/shopping-app-backend-0.0.1-SNAPSHOT.jar
+          - project: shopping-app-backend
+            repo: Shitanshu686/shopping-app-backend
+            ref: d1b392e7f767c4d6010768a9dfa5297bb245c964
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/shopping-app-backend-0.0.1-SNAPSHOT.jar
+          - project: shopping-app-backend
+            repo: kdiveshr/shopping-app-backend
+            ref: 20386c56099a4cba5a5d47f3808fe2d267a2466f
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/shopping-app-backend-0.0.1-SNAPSHOT.jar
+          - project: shopping-app-backend
+            repo: kdiveshr/shopping-app-backend
+            ref: 20386c56099a4cba5a5d47f3808fe2d267a2466f
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/shopping-app-backend-0.0.1-SNAPSHOT.jar
+          - project: shopping-app-backend
+            repo: Shitanshu686/shopping-app-backend
+            ref: d1b392e7f767c4d6010768a9dfa5297bb245c964
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/shopping-app-backend-0.0.1-SNAPSHOT.jar
+          - project: agentcore
+            repo: spring-ai-community/spring-ai-agentcore
+            ref: f0164a5128652e6b6dd4062c66c5292353b14e61
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: spring-ai-agentcore-runtime-starter/target/spring-ai-agentcore-runtime-starter-2.4.0-SNAPSHOT.jar
+          - project: agentcore
+            repo: spring-ai-community/spring-ai-agentcore
+            ref: f0164a5128652e6b6dd4062c66c5292353b14e61
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: spring-ai-agentcore-runtime-starter/target/spring-ai-agentcore-runtime-starter-2.4.0-SNAPSHOT.jar
+          - project: agentcore
+            repo: spring-ai-community/spring-ai-agentcore
+            ref: fa179cc393b24c71888579d1672d6459f2f132d1
+            variant: parent
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: spring-ai-agentcore-runtime-starter/target/spring-ai-agentcore-runtime-starter-2.4.0-SNAPSHOT.jar
+          - project: agentcore
+            repo: spring-ai-community/spring-ai-agentcore
+            ref: f0164a5128652e6b6dd4062c66c5292353b14e61
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: spring-ai-agentcore-runtime-starter/target/spring-ai-agentcore-runtime-starter-2.4.0-SNAPSHOT.jar
+          - project: josdk
+            repo: operator-framework/josdk-spring-boot-starter
+            ref: 1090e662d9fab96b621805a9614fa0cf98699b0a
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: starter/target/operator-framework-spring-boot-starter-6.7.5-SNAPSHOT.jar
+          - project: josdk
+            repo: operator-framework/josdk-spring-boot-starter
+            ref: 1090e662d9fab96b621805a9614fa0cf98699b0a
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: starter/target/operator-framework-spring-boot-starter-6.7.5-SNAPSHOT.jar
+          - project: josdk
+            repo: kdiveshr/josdk-spring-boot-starter
+            ref: 2d5bc6f75acab612b2c599ddf213899079306bcd
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: starter/target/operator-framework-spring-boot-starter-6.7.5-SNAPSHOT.jar
+          - project: josdk
+            repo: kdiveshr/josdk-spring-boot-starter
+            ref: 2d5bc6f75acab612b2c599ddf213899079306bcd
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: starter/target/operator-framework-spring-boot-starter-6.7.5-SNAPSHOT.jar
+          - project: josdk
+            repo: operator-framework/josdk-spring-boot-starter
+            ref: 1090e662d9fab96b621805a9614fa0cf98699b0a
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: starter/target/operator-framework-spring-boot-starter-6.7.5-SNAPSHOT.jar
+          - project: algafood
+            repo: luanferreiradev/algafood-api-algaworks
+            ref: 6d6a357c3ad36ba96e657e6a1145a099f1d0010a
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/algafood-api-0.0.1-SNAPSHOT.jar
+          - project: algafood
+            repo: luanferreiradev/algafood-api-algaworks
+            ref: 6d6a357c3ad36ba96e657e6a1145a099f1d0010a
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/algafood-api-0.0.1-SNAPSHOT.jar
+          - project: algafood
+            repo: kdiveshr/algafood-api-algaworks
+            ref: 911ac5f37ddf438e87aa7f2f963407be2f04d150
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/algafood-api-0.0.1-SNAPSHOT.jar
+          - project: algafood
+            repo: kdiveshr/algafood-api-algaworks
+            ref: 911ac5f37ddf438e87aa7f2f963407be2f04d150
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/algafood-api-0.0.1-SNAPSHOT.jar
+          - project: algafood
+            repo: luanferreiradev/algafood-api-algaworks
+            ref: 6d6a357c3ad36ba96e657e6a1145a099f1d0010a
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/algafood-api-0.0.1-SNAPSHOT.jar
+          - project: fintech
+            repo: Pawan-Ghode/Fintech-Payment-Processing-API
+            ref: 15e317198b08e78526dc525487baca6e00277935
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/fintech-payment-processing-api-0.0.1-SNAPSHOT.jar
+          - project: fintech
+            repo: Pawan-Ghode/Fintech-Payment-Processing-API
+            ref: 15e317198b08e78526dc525487baca6e00277935
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/fintech-payment-processing-api-0.0.1-SNAPSHOT.jar
+          - project: fintech
+            repo: kdiveshr/Fintech-Payment-Processing-API
+            ref: eee7403bd9a06677021bb4de74adfd04bd9b310f
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/fintech-payment-processing-api-0.0.1-SNAPSHOT.jar
+          - project: fintech
+            repo: kdiveshr/Fintech-Payment-Processing-API
+            ref: eee7403bd9a06677021bb4de74adfd04bd9b310f
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/fintech-payment-processing-api-0.0.1-SNAPSHOT.jar
+          - project: fintech
+            repo: Pawan-Ghode/Fintech-Payment-Processing-API
+            ref: 15e317198b08e78526dc525487baca6e00277935
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/fintech-payment-processing-api-0.0.1-SNAPSHOT.jar
+          - project: linguamate
+            repo: bulangya-bu/linguamate-agent
+            ref: 48f8e1c625699dab0e437136974e5e82f770cec4
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/java-big-work-0.0.1-SNAPSHOT.jar
+          - project: linguamate
+            repo: bulangya-bu/linguamate-agent
+            ref: 48f8e1c625699dab0e437136974e5e82f770cec4
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/java-big-work-0.0.1-SNAPSHOT.jar
+          - project: linguamate
+            repo: kdiveshr/linguamate-agent
+            ref: 4a695f8a2838ff182b694fb1bbc5786d88e54c65
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/java-big-work-0.0.1-SNAPSHOT.jar
+          - project: linguamate
+            repo: kdiveshr/linguamate-agent
+            ref: 4a695f8a2838ff182b694fb1bbc5786d88e54c65
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/java-big-work-0.0.1-SNAPSHOT.jar
+          - project: linguamate
+            repo: bulangya-bu/linguamate-agent
+            ref: 48f8e1c625699dab0e437136974e5e82f770cec4
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/java-big-work-0.0.1-SNAPSHOT.jar
+          - project: detection
+            repo: Coelho-Techne/detectionSystem
+            ref: 5b25beca7c3b431a58602af48e58b9b04b8c39bf
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/detection-system-0.0.1-SNAPSHOT.jar
+          - project: detection
+            repo: Coelho-Techne/detectionSystem
+            ref: 5b25beca7c3b431a58602af48e58b9b04b8c39bf
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/detection-system-0.0.1-SNAPSHOT.jar
+          - project: detection
+            repo: kdiveshr/detectionSystem
+            ref: d8b30c2b772703c68f4a8d8a51f4278eb6679ce2
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/detection-system-0.0.1-SNAPSHOT.jar
+          - project: detection
+            repo: kdiveshr/detectionSystem
+            ref: d8b30c2b772703c68f4a8d8a51f4278eb6679ce2
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/detection-system-0.0.1-SNAPSHOT.jar
+          - project: detection
+            repo: Coelho-Techne/detectionSystem
+            ref: 5b25beca7c3b431a58602af48e58b9b04b8c39bf
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/detection-system-0.0.1-SNAPSHOT.jar
+          - project: pets
+            repo: Thissvane/PetsUniverseSpringBoot
+            ref: 0daf2f16dd0ac0c449fe5820d11f575d23efab4f
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/PetsUniverse-0.0.1-SNAPSHOT.jar
+          - project: pets
+            repo: Thissvane/PetsUniverseSpringBoot
+            ref: 0daf2f16dd0ac0c449fe5820d11f575d23efab4f
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/PetsUniverse-0.0.1-SNAPSHOT.jar
+          - project: pets
+            repo: kdiveshr/PetsUniverseSpringBoot
+            ref: be499f20b93b08c2be831101a0990d77bf4ca781
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/PetsUniverse-0.0.1-SNAPSHOT.jar
+          - project: pets
+            repo: kdiveshr/PetsUniverseSpringBoot
+            ref: be499f20b93b08c2be831101a0990d77bf4ca781
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/PetsUniverse-0.0.1-SNAPSHOT.jar
+          - project: pets
+            repo: Thissvane/PetsUniverseSpringBoot
+            ref: 0daf2f16dd0ac0c449fe5820d11f575d23efab4f
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/PetsUniverse-0.0.1-SNAPSHOT.jar
+          - project: dapr
+            repo: dapr/java-sdk
+            ref: f8c4c282e9c965cc85ed53e85374dc71779f10cb
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: sdk/target/dapr-sdk-1.20.0-SNAPSHOT.jar
+          - project: dapr
+            repo: dapr/java-sdk
+            ref: f8c4c282e9c965cc85ed53e85374dc71779f10cb
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: sdk/target/dapr-sdk-1.20.0-SNAPSHOT.jar
+          - project: dapr
+            repo: kdiveshr/java-sdk
+            ref: b1dad6750a5e8d40348ec9879168a354066d338d
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: sdk/target/dapr-sdk-1.20.0-SNAPSHOT.jar
+          - project: dapr
+            repo: kdiveshr/java-sdk
+            ref: b1dad6750a5e8d40348ec9879168a354066d338d
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: sdk/target/dapr-sdk-1.20.0-SNAPSHOT.jar
+          - project: dapr
+            repo: dapr/java-sdk
+            ref: f8c4c282e9c965cc85ed53e85374dc71779f10cb
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: sdk/target/dapr-sdk-1.20.0-SNAPSHOT.jar
+          - project: amqp
+            repo: amqphub/amqp-10-jms-spring-boot
+            ref: 7d86d0c6fa7f945e6cd255056e094a21ac1c24b6
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: amqp-10-jms-spring-boot-starter/target/amqp-10-jms-spring-boot-starter-4.1.11-SNAPSHOT.jar
+          - project: amqp
+            repo: amqphub/amqp-10-jms-spring-boot
+            ref: 7d86d0c6fa7f945e6cd255056e094a21ac1c24b6
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: amqp-10-jms-spring-boot-starter/target/amqp-10-jms-spring-boot-starter-4.1.11-SNAPSHOT.jar
+          - project: amqp
+            repo: kdiveshr/amqp-10-jms-spring-boot
+            ref: 88afa81bb0b8a3b0bf242e58cee5ae8fa9df58cb
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: amqp-10-jms-spring-boot-starter/target/amqp-10-jms-spring-boot-starter-4.1.11-SNAPSHOT.jar
+          - project: amqp
+            repo: kdiveshr/amqp-10-jms-spring-boot
+            ref: 88afa81bb0b8a3b0bf242e58cee5ae8fa9df58cb
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: amqp-10-jms-spring-boot-starter/target/amqp-10-jms-spring-boot-starter-4.1.11-SNAPSHOT.jar
+          - project: amqp
+            repo: amqphub/amqp-10-jms-spring-boot
+            ref: 7d86d0c6fa7f945e6cd255056e094a21ac1c24b6
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: amqp-10-jms-spring-boot-starter/target/amqp-10-jms-spring-boot-starter-4.1.11-SNAPSHOT.jar
+          - project: datasource
+            repo: jdbc-observations/datasource-micrometer
+            ref: b7c62115730f47d6842833afab7bdae7d385db3b
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: datasource-micrometer/target/datasource-micrometer-2.3.1-SNAPSHOT.jar
+          - project: datasource
+            repo: jdbc-observations/datasource-micrometer
+            ref: b7c62115730f47d6842833afab7bdae7d385db3b
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: datasource-micrometer/target/datasource-micrometer-2.3.1-SNAPSHOT.jar
+          - project: datasource
+            repo: kdiveshr/datasource-micrometer
+            ref: a3db1bba0ccd84828e592ada05610ef7bb7711fb
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: datasource-micrometer/target/datasource-micrometer-2.3.1-SNAPSHOT.jar
+          - project: datasource
+            repo: kdiveshr/datasource-micrometer
+            ref: a3db1bba0ccd84828e592ada05610ef7bb7711fb
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: datasource-micrometer/target/datasource-micrometer-2.3.1-SNAPSHOT.jar
+          - project: datasource
+            repo: jdbc-observations/datasource-micrometer
+            ref: b7c62115730f47d6842833afab7bdae7d385db3b
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: datasource-micrometer/target/datasource-micrometer-2.3.1-SNAPSHOT.jar
+          - project: bookmanager
+            repo: HQfire/book-manager
+            ref: 7073ab1db6a2626540fc3bc65dcdad2fd91036e1
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/book-manager-0.0.1-SNAPSHOT.jar
+          - project: bookmanager
+            repo: HQfire/book-manager
+            ref: 7073ab1db6a2626540fc3bc65dcdad2fd91036e1
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/book-manager-0.0.1-SNAPSHOT.jar
+          - project: bookmanager
+            repo: kdiveshr/book-manager
+            ref: 7ff53ca4c06b09972c3dfbd0d49b49412294e259
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/book-manager-0.0.1-SNAPSHOT.jar
+          - project: bookmanager
+            repo: kdiveshr/book-manager
+            ref: 7ff53ca4c06b09972c3dfbd0d49b49412294e259
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/book-manager-0.0.1-SNAPSHOT.jar
+          - project: bookmanager
+            repo: HQfire/book-manager
+            ref: 7073ab1db6a2626540fc3bc65dcdad2fd91036e1
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/book-manager-0.0.1-SNAPSHOT.jar
+          - project: zlm
+            repo: lunasaw/zlm-spring-boot-starter
+            ref: 59a262c09d9c1ffb6ef14615d13173368a6b32f4
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/zlm-spring-boot-starter-1.0.11.jar
+          - project: zlm
+            repo: lunasaw/zlm-spring-boot-starter
+            ref: 59a262c09d9c1ffb6ef14615d13173368a6b32f4
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/zlm-spring-boot-starter-1.0.11.jar
+          - project: zlm
+            repo: kdiveshr/zlm-spring-boot-starter
+            ref: eb9af3e384ca18e7df93311e7239532960c6f0c6
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/zlm-spring-boot-starter-1.0.11.jar
+          - project: zlm
+            repo: kdiveshr/zlm-spring-boot-starter
+            ref: eb9af3e384ca18e7df93311e7239532960c6f0c6
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/zlm-spring-boot-starter-1.0.11.jar
+          - project: zlm
+            repo: lunasaw/zlm-spring-boot-starter
+            ref: 59a262c09d9c1ffb6ef14615d13173368a6b32f4
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/zlm-spring-boot-starter-1.0.11.jar
+          - project: springvuln
+            repo: bansh2eBreak/SpringVulnBoot-backend
+            ref: 31ea29b5388628be5ca454a27fcf215a60f91e5b
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/SpringVulnBoot-0.0.1-SNAPSHOT.jar
+          - project: springvuln
+            repo: bansh2eBreak/SpringVulnBoot-backend
+            ref: 31ea29b5388628be5ca454a27fcf215a60f91e5b
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/SpringVulnBoot-0.0.1-SNAPSHOT.jar
+          - project: springvuln
+            repo: kdiveshr/SpringVulnBoot-backend
+            ref: 18d600d88623c94e5ba0a3699c48baa502d5cae4
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/SpringVulnBoot-0.0.1-SNAPSHOT.jar
+          - project: springvuln
+            repo: kdiveshr/SpringVulnBoot-backend
+            ref: 18d600d88623c94e5ba0a3699c48baa502d5cae4
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/SpringVulnBoot-0.0.1-SNAPSHOT.jar
+          - project: springvuln
+            repo: bansh2eBreak/SpringVulnBoot-backend
+            ref: 31ea29b5388628be5ca454a27fcf215a60f91e5b
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/SpringVulnBoot-0.0.1-SNAPSHOT.jar
+          - project: springmvc
+            repo: diva154/SpringMVC-to-SpringBoot-CRUDoperation-Migration
+            ref: 4fa9ea7c6e5701030e09a72f4b25c33be2d595e3
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/SpringBootCRUD-0.0.1-SNAPSHOT.jar
+          - project: springmvc
+            repo: diva154/SpringMVC-to-SpringBoot-CRUDoperation-Migration
+            ref: 4fa9ea7c6e5701030e09a72f4b25c33be2d595e3
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/SpringBootCRUD-0.0.1-SNAPSHOT.jar
+          - project: springmvc
+            repo: kdiveshr/SpringMVC-to-SpringBoot-CRUDoperation-Migration
+            ref: 1262dc3145d237b1cf5fcfb00c9ff1cfbfb62eb4
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/SpringBootCRUD-0.0.1-SNAPSHOT.jar
+          - project: springmvc
+            repo: kdiveshr/SpringMVC-to-SpringBoot-CRUDoperation-Migration
+            ref: 1262dc3145d237b1cf5fcfb00c9ff1cfbfb62eb4
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/SpringBootCRUD-0.0.1-SNAPSHOT.jar
+          - project: springmvc
+            repo: diva154/SpringMVC-to-SpringBoot-CRUDoperation-Migration
+            ref: 4fa9ea7c6e5701030e09a72f4b25c33be2d595e3
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/SpringBootCRUD-0.0.1-SNAPSHOT.jar
+          - project: bootui
+            repo: jdubois/boot-ui
+            ref: 1f5b25ed8dfb11100e47f7d3127de862d45f343c
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: bootui-engine/target/bootui-engine-2.4.0.jar
+          - project: bootui
+            repo: jdubois/boot-ui
+            ref: 1f5b25ed8dfb11100e47f7d3127de862d45f343c
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: bootui-engine/target/bootui-engine-2.4.0.jar
+          - project: bootui
+            repo: kdiveshr/boot-ui
+            ref: cb2312fb2ec7bbfb2acce46ecfb9c1c050a6b6ce
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: bootui-engine/target/bootui-engine-2.4.0.jar
+          - project: bootui
+            repo: kdiveshr/boot-ui
+            ref: cb2312fb2ec7bbfb2acce46ecfb9c1c050a6b6ce
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: bootui-engine/target/bootui-engine-2.4.0.jar
+          - project: bootui
+            repo: jdubois/boot-ui
+            ref: 1f5b25ed8dfb11100e47f7d3127de862d45f343c
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: bootui-engine/target/bootui-engine-2.4.0.jar
+          - project: practice
+            repo: penpencil721-lab/spring-boot-practice
+            ref: 518e05647eed69f8306df021a38f608ddf13c87e
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/demo-0.0.1-SNAPSHOT.jar
+          - project: practice
+            repo: penpencil721-lab/spring-boot-practice
+            ref: 518e05647eed69f8306df021a38f608ddf13c87e
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/demo-0.0.1-SNAPSHOT.jar
+          - project: practice
+            repo: kdiveshr/spring-boot-practice
+            ref: c60d059ea3b3dd34d61563884664c2ecd8c6a611
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/demo-0.0.1-SNAPSHOT.jar
+          - project: practice
+            repo: kdiveshr/spring-boot-practice
+            ref: c60d059ea3b3dd34d61563884664c2ecd8c6a611
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/demo-0.0.1-SNAPSHOT.jar
+          - project: practice
+            repo: penpencil721-lab/spring-boot-practice
+            ref: 518e05647eed69f8306df021a38f608ddf13c87e
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/demo-0.0.1-SNAPSHOT.jar
+          - project: itau
+            repo: JoseOtavioJunqueira/desafio-itau-backend
+            ref: 1d409ea98ddb943c9fca2d7faf63c5dd9a520d86
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/transacao-estatistica-api-0.0.1-SNAPSHOT.jar
+          - project: itau
+            repo: JoseOtavioJunqueira/desafio-itau-backend
+            ref: 1d409ea98ddb943c9fca2d7faf63c5dd9a520d86
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/transacao-estatistica-api-0.0.1-SNAPSHOT.jar
+          - project: itau
+            repo: kdiveshr/desafio-itau-backend
+            ref: dc2f9a29a33ece1404db31810922575c03350b62
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/transacao-estatistica-api-0.0.1-SNAPSHOT.jar
+          - project: itau
+            repo: kdiveshr/desafio-itau-backend
+            ref: dc2f9a29a33ece1404db31810922575c03350b62
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/transacao-estatistica-api-0.0.1-SNAPSHOT.jar
+          - project: itau
+            repo: JoseOtavioJunqueira/desafio-itau-backend
+            ref: 1d409ea98ddb943c9fca2d7faf63c5dd9a520d86
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/transacao-estatistica-api-0.0.1-SNAPSHOT.jar
+          - project: chaosmonkey
+            repo: codecentric/chaos-monkey-spring-boot
+            ref: ecd224b7075f1da821e599ead35f64ef8a0cf8ea
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: chaos-monkey-spring-boot/target/chaos-monkey-spring-boot-4.0.1-SNAPSHOT.jar
+          - project: chaosmonkey
+            repo: codecentric/chaos-monkey-spring-boot
+            ref: ecd224b7075f1da821e599ead35f64ef8a0cf8ea
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: chaos-monkey-spring-boot/target/chaos-monkey-spring-boot-4.0.1-SNAPSHOT.jar
+          - project: chaosmonkey
+            repo: kdiveshr/chaos-monkey-spring-boot
+            ref: 18d71cee89430c83dc541f016cda8465e1928017
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: chaos-monkey-spring-boot/target/chaos-monkey-spring-boot-4.0.1-SNAPSHOT.jar
+          - project: chaosmonkey
+            repo: kdiveshr/chaos-monkey-spring-boot
+            ref: 18d71cee89430c83dc541f016cda8465e1928017
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: chaos-monkey-spring-boot/target/chaos-monkey-spring-boot-4.0.1-SNAPSHOT.jar
+          - project: chaosmonkey
+            repo: codecentric/chaos-monkey-spring-boot
+            ref: ecd224b7075f1da821e599ead35f64ef8a0cf8ea
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: chaos-monkey-spring-boot/target/chaos-monkey-spring-boot-4.0.1-SNAPSHOT.jar
+          - project: petclinic
+            repo: spring-petclinic/spring-petclinic-data-jdbc
+            ref: d601d3a8fa481e67676f67beda790e0d6bda701d
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/spring-petclinic-data-jdbc-3.0.0.BUILD-SNAPSHOT.jar
+          - project: petclinic
+            repo: spring-petclinic/spring-petclinic-data-jdbc
+            ref: d601d3a8fa481e67676f67beda790e0d6bda701d
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/spring-petclinic-data-jdbc-3.0.0.BUILD-SNAPSHOT.jar
+          - project: petclinic
+            repo: kdiveshr/spring-petclinic-data-jdbc
+            ref: 8209b81b8666054de26108a9cdefa879208bca75
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/spring-petclinic-data-jdbc-3.0.0.BUILD-SNAPSHOT.jar
+          - project: petclinic
+            repo: kdiveshr/spring-petclinic-data-jdbc
+            ref: 8209b81b8666054de26108a9cdefa879208bca75
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/spring-petclinic-data-jdbc-3.0.0.BUILD-SNAPSHOT.jar
+          - project: petclinic
+            repo: spring-petclinic/spring-petclinic-data-jdbc
+            ref: d601d3a8fa481e67676f67beda790e0d6bda701d
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/spring-petclinic-data-jdbc-3.0.0.BUILD-SNAPSHOT.jar
+          - project: apollo
+            repo: apolloconfig/apollo
+            ref: 504e5cd7d49bde328e9bc558688828159ed55aeb
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: apollo-assembly/target/apollo-assembly-3.1.0-SNAPSHOT.jar
+          - project: apollo
+            repo: apolloconfig/apollo
+            ref: 504e5cd7d49bde328e9bc558688828159ed55aeb
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: apollo-assembly/target/apollo-assembly-3.1.0-SNAPSHOT.jar
+          - project: apollo
+            repo: kdiveshr/apollo
+            ref: 93b97d135657537c1380452720e98a040c784cb1
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: apollo-assembly/target/apollo-assembly-3.1.0-SNAPSHOT.jar
+          - project: apollo
+            repo: kdiveshr/apollo
+            ref: 93b97d135657537c1380452720e98a040c784cb1
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: apollo-assembly/target/apollo-assembly-3.1.0-SNAPSHOT.jar
+          - project: apollo
+            repo: apolloconfig/apollo
+            ref: 504e5cd7d49bde328e9bc558688828159ed55aeb
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: apollo-assembly/target/apollo-assembly-3.1.0-SNAPSHOT.jar
+          - project: social
+            repo: thangtranitwork/social-network
+            ref: 739b9d7b08e505d344910a52eee776680b8cb8ec
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/social-network-api-1.2.0-SNAPSHOT.jar
+          - project: social
+            repo: thangtranitwork/social-network
+            ref: 739b9d7b08e505d344910a52eee776680b8cb8ec
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/social-network-api-1.2.0-SNAPSHOT.jar
+          - project: social
+            repo: kdiveshr/social-network
+            ref: 4ae0e7523a4487037380d7392e757028f3ffb069
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/social-network-api-1.2.0-SNAPSHOT.jar
+          - project: social
+            repo: kdiveshr/social-network
+            ref: 4ae0e7523a4487037380d7392e757028f3ffb069
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/social-network-api-1.2.0-SNAPSHOT.jar
+          - project: social
+            repo: thangtranitwork/social-network
+            ref: 739b9d7b08e505d344910a52eee776680b8cb8ec
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/social-network-api-1.2.0-SNAPSHOT.jar
+          - project: trello
+            repo: Temirlan222/trello-main
+            ref: 5f70a856f4f4755e6aa0d1090f003ddea29c9f82
+            variant: unfixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/trello-main-0.0.1-SNAPSHOT.jar
+          - project: trello
+            repo: Temirlan222/trello-main
+            ref: 5f70a856f4f4755e6aa0d1090f003ddea29c9f82
+            variant: unfixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/trello-main-0.0.1-SNAPSHOT.jar
+          - project: trello
+            repo: kdiveshr/trello-main
+            ref: 3c87f1505a2aac9935d1a5aa3da6ea3a19c93195
+            variant: fixed
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/trello-main-0.0.1-SNAPSHOT.jar
+          - project: trello
+            repo: kdiveshr/trello-main
+            ref: 3c87f1505a2aac9935d1a5aa3da6ea3a19c93195
+            variant: fixed
+            env: env2
+            runs-on: ubuntu-22.04
+            jar: target/trello-main-0.0.1-SNAPSHOT.jar
+          - project: trello
+            repo: Temirlan222/trello-main
+            ref: 5f70a856f4f4755e6aa0d1090f003ddea29c9f82
+            variant: compromise
+            env: env1
+            runs-on: ubuntu-24.04
+            jar: target/trello-main-0.0.1-SNAPSHOT.jar
+    runs-on: ${{ matrix.runs-on }}
+    steps:
+      - name: Checkout target at pinned commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: ${{ matrix.repo }}
+          ref: ${{ matrix.ref }}
+          path: src
+
+      - name: Set up Temurin 17
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          java-version: "17"
+          distribution: temurin
+
+      - name: Install pinned Maven 3.9.9 (FAIL unless 3.9.9)
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -fsSL -o apache-maven-3.9.9-bin.tar.gz "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.tar.gz" || curl -fsSL -o apache-maven-3.9.9-bin.tar.gz "https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz"
+          curl -fsSL -o apache-maven-3.9.9-bin.tar.gz.sha512 "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.tar.gz.sha512" || curl -fsSL -o apache-maven-3.9.9-bin.tar.gz.sha512 "https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz.sha512"
+          echo "$(awk '{print $1}' apache-maven-3.9.9-bin.tar.gz.sha512)  apache-maven-3.9.9-bin.tar.gz" | sha512sum -c -
+          tar -xzf apache-maven-3.9.9-bin.tar.gz
+          echo "$RUNNER_TEMP/apache-maven-3.9.9/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/apache-maven-3.9.9/bin/mvn" -version
+
+      - name: Build (Paper 1 command; SOURCE_DATE_EPOCH exported in-step)
+        working-directory: src
+        run: |
+          set -euo pipefail
+          java -version
+          mvn -version
+          mvn -version | grep -q "Apache Maven 3.9.9" || { echo "FATAL: Maven is not 3.9.9 — refusing to build on 3.10.1"; exit 1; }
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH"
+          mvn -B package -DskipTests
+
+      - name: Locate built JAR
+        id: jar
+        run: |
+          JAR="src/${{ matrix.jar }}"
+          test -f "$JAR" || { echo "FATAL: representative JAR not found: $JAR"; ls src/target/*.jar 2>/dev/null || true; exit 1; }
+          echo "jar=$JAR" >> "$GITHUB_OUTPUT"
+          sha256sum "$JAR"
+
+      - name: Arm (e) compromise injection — self-inflicted, marker only
+        if: matrix.variant == 'compromise'
+        run: |
+          python3 - <<'PYEOF'
+          import zipfile
+          jar = "${{ steps.jar.outputs.jar }}"
+          with zipfile.ZipFile(jar, "a") as z:
+              z.writestr("FULLRUN-COMPROMISE-MARKER.txt",
+                         "self-inflicted full-run tamper, no real secret\n")
+          PYEOF
+          sha256sum "${{ steps.jar.outputs.jar }}"
+
+      - name: Attest build provenance (SLSA)
+        uses: actions/attest-build-provenance@e8998f949152b193b063cb0ec769d69d929409be
+        with:
+          subject-path: ${{ steps.jar.outputs.jar }}
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ${{ matrix.project }}-${{ matrix.variant }}-${{ matrix.env }}
+          path: ${{ steps.jar.outputs.jar }}
+          if-no-files-found: error
+          retention-days: 3
+
+  gen-build-fintech:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
+    steps:
+      - name: Checkout target at pinned commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: Pawan-Ghode/Fintech-Payment-Processing-API
+          ref: 15e317198b08e78526dc525487baca6e00277935
+          path: src
+
+      - name: Set up Temurin 17
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          java-version: "17"
+          distribution: temurin
+
+      - name: Install pinned Maven 3.9.9 (FAIL unless 3.9.9)
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -fsSL -o apache-maven-3.9.9-bin.tar.gz "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.tar.gz" || curl -fsSL -o apache-maven-3.9.9-bin.tar.gz "https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz"
+          curl -fsSL -o apache-maven-3.9.9-bin.tar.gz.sha512 "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.tar.gz.sha512" || curl -fsSL -o apache-maven-3.9.9-bin.tar.gz.sha512 "https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz.sha512"
+          echo "$(awk '{print $1}' apache-maven-3.9.9-bin.tar.gz.sha512)  apache-maven-3.9.9-bin.tar.gz" | sha512sum -c -
+          tar -xzf apache-maven-3.9.9-bin.tar.gz
+          echo "$RUNNER_TEMP/apache-maven-3.9.9/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/apache-maven-3.9.9/bin/mvn" -version
+
+      - name: Build (Paper 1 command; SOURCE_DATE_EPOCH exported in-step)
+        working-directory: src
+        run: |
+          set -euo pipefail
+          java -version
+          mvn -version
+          mvn -version | grep -q "Apache Maven 3.9.9" || { echo "FATAL: Maven is not 3.9.9 — refusing to build on 3.10.1"; exit 1; }
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH"
+          mvn -B package -DskipTests
+
+      - name: Hash JAR
+        id: hash
+        run: |
+          JAR="src/target/fintech-payment-processing-api-0.0.1-SNAPSHOT.jar"
+          test -f "$JAR" || { echo "FATAL: representative JAR not found: $JAR"; exit 1; }
+          echo "jar=$JAR" >> "$GITHUB_OUTPUT"
+          echo "hashes=$(sha256sum "$JAR" | base64 -w0)" >> "$GITHUB_OUTPUT"
+          sha256sum "$JAR"
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fintech-generator-build
+          path: src/target/fintech-payment-processing-api-0.0.1-SNAPSHOT.jar
+          if-no-files-found: error
+          retention-days: 3
+
+  gen-provenance-fintech:
+    needs: [gen-build-fintech]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects: "${{ needs.gen-build-fintech.outputs.hashes }}"
+      upload-assets: false
+
+  gen-build-pets:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
+    steps:
+      - name: Checkout target at pinned commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: Thissvane/PetsUniverseSpringBoot
+          ref: 0daf2f16dd0ac0c449fe5820d11f575d23efab4f
+          path: src
+
+      - name: Set up Temurin 17
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          java-version: "17"
+          distribution: temurin
+
+      - name: Install pinned Maven 3.9.9 (FAIL unless 3.9.9)
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -fsSL -o apache-maven-3.9.9-bin.tar.gz "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.tar.gz" || curl -fsSL -o apache-maven-3.9.9-bin.tar.gz "https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz"
+          curl -fsSL -o apache-maven-3.9.9-bin.tar.gz.sha512 "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.tar.gz.sha512" || curl -fsSL -o apache-maven-3.9.9-bin.tar.gz.sha512 "https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz.sha512"
+          echo "$(awk '{print $1}' apache-maven-3.9.9-bin.tar.gz.sha512)  apache-maven-3.9.9-bin.tar.gz" | sha512sum -c -
+          tar -xzf apache-maven-3.9.9-bin.tar.gz
+          echo "$RUNNER_TEMP/apache-maven-3.9.9/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/apache-maven-3.9.9/bin/mvn" -version
+
+      - name: Build (Paper 1 command; SOURCE_DATE_EPOCH exported in-step)
+        working-directory: src
+        run: |
+          set -euo pipefail
+          java -version
+          mvn -version
+          mvn -version | grep -q "Apache Maven 3.9.9" || { echo "FATAL: Maven is not 3.9.9 — refusing to build on 3.10.1"; exit 1; }
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH"
+          mvn -B package -DskipTests
+
+      - name: Hash JAR
+        id: hash
+        run: |
+          JAR="src/target/PetsUniverse-0.0.1-SNAPSHOT.jar"
+          test -f "$JAR" || { echo "FATAL: representative JAR not found: $JAR"; exit 1; }
+          echo "jar=$JAR" >> "$GITHUB_OUTPUT"
+          echo "hashes=$(sha256sum "$JAR" | base64 -w0)" >> "$GITHUB_OUTPUT"
+          sha256sum "$JAR"
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: pets-generator-build
+          path: src/target/PetsUniverse-0.0.1-SNAPSHOT.jar
+          if-no-files-found: error
+          retention-days: 3
+
+  gen-provenance-pets:
+    needs: [gen-build-pets]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects: "${{ needs.gen-build-pets.outputs.hashes }}"
+      upload-assets: false
+
+  gen-build-itau:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    outputs:
+      hashes: ${{ steps.hash.outputs.hashes }}
+    steps:
+      - name: Checkout target at pinned commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: JoseOtavioJunqueira/desafio-itau-backend
+          ref: 1d409ea98ddb943c9fca2d7faf63c5dd9a520d86
+          path: src
+
+      - name: Set up Temurin 17
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          java-version: "17"
+          distribution: temurin
+
+      - name: Install pinned Maven 3.9.9 (FAIL unless 3.9.9)
+        run: |
+          set -euo pipefail
+          cd "$RUNNER_TEMP"
+          curl -fsSL -o apache-maven-3.9.9-bin.tar.gz "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.tar.gz" || curl -fsSL -o apache-maven-3.9.9-bin.tar.gz "https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz"
+          curl -fsSL -o apache-maven-3.9.9-bin.tar.gz.sha512 "https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.tar.gz.sha512" || curl -fsSL -o apache-maven-3.9.9-bin.tar.gz.sha512 "https://archive.apache.org/dist/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz.sha512"
+          echo "$(awk '{print $1}' apache-maven-3.9.9-bin.tar.gz.sha512)  apache-maven-3.9.9-bin.tar.gz" | sha512sum -c -
+          tar -xzf apache-maven-3.9.9-bin.tar.gz
+          echo "$RUNNER_TEMP/apache-maven-3.9.9/bin" >> "$GITHUB_PATH"
+          "$RUNNER_TEMP/apache-maven-3.9.9/bin/mvn" -version
+
+      - name: Build (Paper 1 command; SOURCE_DATE_EPOCH exported in-step)
+        working-directory: src
+        run: |
+          set -euo pipefail
+          java -version
+          mvn -version
+          mvn -version | grep -q "Apache Maven 3.9.9" || { echo "FATAL: Maven is not 3.9.9 — refusing to build on 3.10.1"; exit 1; }
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH"
+          mvn -B package -DskipTests
+
+      - name: Hash JAR
+        id: hash
+        run: |
+          JAR="src/target/transacao-estatistica-api-0.0.1-SNAPSHOT.jar"
+          test -f "$JAR" || { echo "FATAL: representative JAR not found: $JAR"; exit 1; }
+          echo "jar=$JAR" >> "$GITHUB_OUTPUT"
+          echo "hashes=$(sha256sum "$JAR" | base64 -w0)" >> "$GITHUB_OUTPUT"
+          sha256sum "$JAR"
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: itau-generator-build
+          path: src/target/transacao-estatistica-api-0.0.1-SNAPSHOT.jar
+          if-no-files-found: error
+          retention-days: 3
+
+  gen-provenance-itau:
+    needs: [gen-build-itau]
+    permissions:
+      actions: read
+      id-token: write
+      contents: write
+    uses: slsa-framework/slsa-github-generator/.github/workflows/generator_generic_slsa3.yml@v2.1.0
+    with:
+      base64-subjects: "${{ needs.gen-build-itau.outputs.hashes }}"
+      upload-assets: false
