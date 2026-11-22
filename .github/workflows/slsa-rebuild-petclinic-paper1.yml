@@ -7,6 +7,8 @@
 # If the rebuilt digest is 1f4a011d, diffoscope it against this run's fixed JAR to
 # find what differs (candidate: JDK patch level 17.0.15+6 vs 17.0.21-9).
 # Single job, zero load. No tamper, no secrets, own fork only.
+# NOTE: container default shell is sh (dash) — every run step sets shell: bash,
+# placed BEFORE run: (putting it after "run: |" breaks YAML parsing).
 name: slsa-rebuild-petclinic-paper1
 on:
   workflow_dispatch: {}
@@ -29,24 +31,24 @@ jobs:
           path: src
 
       - name: Record toolchain
-        run: |
         shell: bash
+        run: |
           java -version
           mvn -version
           echo "SOURCE_DATE_EPOCH=1794971015"
 
       - name: Build (Paper 1 command; SOURCE_DATE_EPOCH exported in-step)
         working-directory: src
-        run: |
         shell: bash
+        run: |
           set -euo pipefail
           export SOURCE_DATE_EPOCH=1794971015
           mvn -B package -DskipTests
 
       - name: Locate built JAR
         id: jar
-        run: |
         shell: bash
+        run: |
           JAR="src/target/spring-petclinic-data-jdbc-3.0.0.BUILD-SNAPSHOT.jar"
           test -f "$JAR" || { echo "FATAL: representative JAR not found: $JAR"; ls src/target/*.jar 2>/dev/null || true; exit 1; }
           echo "jar=$JAR" >> "$GITHUB_OUTPUT"
