@@ -129,10 +129,12 @@ jobs:
           java-version: "17"
           distribution: temurin
 
-      - name: Build (Paper 1 command; SOURCE_DATE_EPOCH = commit time)
+      - name: Build (Paper 1 command; SOURCE_DATE_EPOCH exported in-step)
         working-directory: src
         run: |
-          echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
+          mvn -version
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH"
           mvn -B package -DskipTests
 
       - name: Locate built JAR
@@ -187,10 +189,12 @@ jobs:
         with:
           java-version: "17"
           distribution: temurin
-      - name: Build (Paper 1 command; SOURCE_DATE_EPOCH = commit time)
+      - name: Build (Paper 1 command; SOURCE_DATE_EPOCH exported in-step)
         working-directory: src
         run: |
-          echo "SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)" >> "$GITHUB_ENV"
+          mvn -version
+          export SOURCE_DATE_EPOCH=$(git log -1 --format=%ct)
+          echo "SOURCE_DATE_EPOCH=$SOURCE_DATE_EPOCH"
           mvn -B package -DskipTests
       - name: Hash JAR
         id: hash
