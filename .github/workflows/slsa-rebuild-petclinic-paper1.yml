@@ -1,0 +1,58 @@
+# SLSA Paper 2 — petclinic rebuild under Paper 1's EXACT conditions (Nov 22, 2026)
+# Paper 1's fixed petclinic JAR is not retained (hashes only by design):
+#   Paper 1 record: sha256 1f4a011d4725b0088521b6c8fd6c7c85c2ff2b45bbcb6aa604f3cc89b282ef1f, 53235714 bytes
+#   This run (SLSA full run, runner Temurin 17.0.21-9): 3a8a20c53ef59cf7c17ff792915989ecd7b466b66bb16964e30b681e5864098a, 53235710 bytes
+# Rebuild the same fix commit in Paper 1's builder container image (digest-pinned,
+# the exact image Paper 1's E1/E2/E3 fix phase used), same SDE, same mvn command.
+# If the rebuilt digest is 1f4a011d, diffoscope it against this run's fixed JAR to
+# find what differs (candidate: JDK patch level 17.0.15+6 vs 17.0.21-9).
+# Single job, zero load. No tamper, no secrets, own fork only.
+name: slsa-rebuild-petclinic-paper1
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    timeout-minutes: 360
+    runs-on: ubuntu-24.04
+    container:
+      image: ghcr.io/kdiveshr/reproducible-builds-ci-study-builder@sha256:97995a7aa18ba0cc056850d046d79d9dd87d7b285930ed4d85e084d52c996504
+    steps:
+      - name: Checkout fix commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: kdiveshr/spring-petclinic-data-jdbc
+          ref: 8209b81b8666054de26108a9cdefa879208bca75
+          path: src
+
+      - name: Record toolchain
+        run: |
+          java -version
+          mvn -version
+          echo "SOURCE_DATE_EPOCH=1794971015"
+
+      - name: Build (Paper 1 command; SOURCE_DATE_EPOCH exported in-step)
+        working-directory: src
+        run: |
+          set -euo pipefail
+          export SOURCE_DATE_EPOCH=1794971015
+          mvn -B package -DskipTests
+
+      - name: Locate built JAR
+        id: jar
+        run: |
+          JAR="src/target/spring-petclinic-data-jdbc-3.0.0.BUILD-SNAPSHOT.jar"
+          test -f "$JAR" || { echo "FATAL: representative JAR not found: $JAR"; ls src/target/*.jar 2>/dev/null || true; exit 1; }
+          echo "jar=$JAR" >> "$GITHUB_OUTPUT"
+          sha256sum "$JAR"
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: petclinic-fixed-paper1-rebuild
+          path: ${{ steps.jar.outputs.jar }}
+          if-no-files-found: error
+          retention-days: 3
